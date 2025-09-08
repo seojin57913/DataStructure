@@ -1,154 +1,104 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#define GROUP_LABEL_SUBTREE 1
+#define ERROR -1
+#define TRUE 1
+#define FALSE 0
+char buf[10000];
+int i;
 
-const char* p;
-int errorFlag = 0;   
-int notBinary = 0;  
-
-static inline void skip(void) { 
-    while (isspace(*p))
-        p++;
+int check_paren(char *buf, int i){
+  int leftParen = 0;
+  int rightParen = 0;
+  if(buf[i] == '('){
+    i++;
+    leftParen++;
+    while(buf[i]){
+      if(buf[i] == '('){
+        i++;
+        leftParen++;
+      }
+      else if(buf[i] == ')'){
+        if(leftParen < rightParen)
+          return ERROR;
+        i++;
+        rightParen++;
+      }
+      else
+        i++;
+    }
+    if(leftParen == rightParen)
+      return TRUE;
+  }
+  return ERROR;
 }
 
-static int readLabel(void) {
-    skip();
-    if (!isalpha((unsigned char)*p)) 
-        return 0;
-    while (isalpha((unsigned char)*p)) 
-        p++;
-    return 1;
+int check_root(char *buf, int i){
+  int leftParen = 0;
+  int rightParen = 0;
+  int rootCount = 0;
+  while(buf[i+1]){
+    if(isalpha(buf[i+1])){
+      i++;
+      rootCount++;
+    }
+    else if(buf[i+1] == '('){
+      i++;
+      leftParen++;
+      while(leftParen != rightParen){
+        if(buf[i+1] == '(')
+          leftParen++;
+        else if(buf[i+1] == ')')
+          rightParen++;
+        i++;
+      }
+    }
+    else
+      i++;
+  }
+  if(rootCount == 1)
+    return TRUE;
+  return ERROR;
 }
 
-static int lookStd(const char* qq) {
-    const char* q = qq;
-    skip();
-    if (*q != '(') 
-        return 0;
-    q++;
-    skip();
-    if (!isalpha((unsigned char)*q)) 
-        return 0;
-    while (isalpha((unsigned char)*q)) 
-        q++;
-    return 1;
+int check_binary_tree(char **pbuf){
+  int nodeCount = 0;
+  while(**pbuf){
+    if(isspace(**pbuf))
+      (*pbuf)++;
+    else if(**pbuf == '('){
+      (*pbuf)++;
+      if(check_binary_tree(pbuf) == FALSE)
+        return FALSE;
+      (*pbuf)++;
+    }
+    else if(**pbuf == ')'){
+      if(nodeCount <= 2)
+        return TRUE;
+      return FALSE;
+    }
+    else if(isalpha(**pbuf)){
+      nodeCount++;
+      (*pbuf)++;
+    }
+  }
+  return TRUE;
 }
 
-static int lookPair(const char* qq) {
-    const char* q = qq;
-    skip();
-    if (*q != '(') 
-        return 0;
-    q++; 
-    skip();
-    if (!isalpha((unsigned char)*q)) 
-        return 0;
-    while (isalpha((unsigned char)*q)) 
-        q++;
-    skip();
-    if (!isalpha((unsigned char)*q)) 
-        return 0;
-    while (isalpha((unsigned char)*q)) 
-        q++;
-    skip();
-    return (*q == ')');
-}
-
-static int atChildStart(void) {
-    skip();
-    return (*p != '\0' && *p != ')' && (*p == '(' || isalpha((unsigned char)*p)));
-}
-
-static void parseNode(void); 
-
-static void parsePairGroup(void) {
-    skip();
-    if (*p != '(') { errorFlag = 1; return; }
-    p++; skip();
-    if (!readLabel()) { errorFlag = 1; return; }
-    skip();
-    if (!readLabel()) { errorFlag = 1; return; }
-    skip();
-    if (*p != ')') { errorFlag = 1; return; }
-    p++; 
-}
-
-static void parsePart(void) {
-    skip();
-    if (*p == '(') {
-        if (lookPair(p)) {
-            parsePairGroup();
-        }
-        else if (lookStd(p)) {
-            parseNode();
-        }
-        else {
-            errorFlag = 1;
-        }
-    }
-    else if (isalpha((unsigned char)*p)) {
-        readLabel();
-#if GROUP_LABEL_SUBTREE
-        skip();
-        if (lookStd(p)) parseNode();  
-#endif
-    }
-    else {
-        errorFlag = 1;
-    }
-}
-
-static void parseNode(void) {
-    skip();
-    if (*p != '(') {
-        errorFlag = 1; 
-        return; 
-    }
-    p++; 
-    skip();
-
-    if (!readLabel()) { 
-        errorFlag = 1; 
-        return; 
-    }
-
-    int parts = 0;
-    while (!errorFlag && atChildStart()) {
-        parsePart();
-        parts++;
-        if (parts > 2) 
-            notBinary = 1;  
-    }
-
-    skip();
-    if (*p != ')') { 
-        errorFlag = 1; 
-        return; 
-    }
-    p++;
-}
-
-int main(void) {
-    static char buf[10000];
-    if (!fgets(buf, sizeof(buf), stdin)) { 
-        puts("ERROR"); 
-        return 0; 
-    }
-    buf[strcspn(buf, "\n")] = '\0';
-
-    p = buf;
-    skip();
-    parseNode();
-    skip();
-    if (*p != '\0') 
-        errorFlag = 1;
-
-    if (errorFlag) 
-        printf("ERROR");
-    else if (notBinary) 
-        printf("FALSE");
-    else 
-        printf("TRUE");
+int main(void){
+  fgets(buf, sizeof(buf), stdin);
+  buf[strcspn(buf, "\n")] = '\0';
+  while(isspace(buf[i]))
+    i++;
+  if(check_paren(buf, i) == ERROR || check_root(buf, i) == ERROR){
+    printf("ERROR\n");
     return 0;
+  }
+  char *p = buf;
+  int result = check_binary_tree(&p);
+  if(result)
+    printf("TRUE\n");
+  else
+    printf("FALSE\n");
+  return 0;
 }

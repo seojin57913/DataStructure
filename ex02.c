@@ -57,13 +57,7 @@ int main(void){
   scanf("%[^\n]", buf);
   trim(buf);
   str = buf;
-  //printf("%s\n%s\n%s\n", buf, str, src);
   staArray(1);
-  //printf("%c\n", *str);
-  // for (int i = 1; i < 100; i++) {
-  //     if (arr[i] != 0)
-  //         printf("[%d]: %c\n", i, arr[i]);
-  // }
   int maxIndex = 0;
   int nodeCount = 0;
   int leafCount = 0;
@@ -82,4 +76,3 @@ int main(void){
   printf("%d,%d,%d\n", height, nodeCount, leafCount);
   return 0;
 }
-//높이, 노드 수, 단말 노드 수

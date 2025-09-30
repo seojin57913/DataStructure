@@ -60,10 +60,10 @@ void preorder(int root) {
   if (arr[root] == '\0') return;
   stack[++top] = root;
   while (top != -1) {
-    int idx = stack[top--];
-    printf("%c ", arr[idx]);
-    int right = idx * 2 + 1;
-    int left = idx * 2;
+    int i = stack[top--];
+    printf("%c ", arr[i]);
+    int right = i * 2 + 1;
+    int left = i * 2;
     if (arr[right] != '\0') stack[++top] = right;
     if (arr[left] != '\0') stack[++top] = left;
   }
@@ -72,15 +72,15 @@ void preorder(int root) {
 void inorder(int root) {
   printf("\nin-order: ");
   int top = -1;
-  int current = root;
-  while (top != -1 || (current < 10000 && arr[current] != '\0')) {
-    while (current < 10000 && arr[current] != '\0') {
-      stack[++top] = current;
-      current = current * 2;
+  int i = root;
+  while (top != -1 || (i < 10000 && arr[i] != '\0')) {
+    while (i < 10000 && arr[i] != '\0') {
+      stack[++top] = i;
+      i = i * 2;
     }
-    current = stack[top--];
-    printf("%c ", arr[current]);
-    current = current * 2 + 1;
+    i = stack[top--];
+    printf("%c ", arr[i]);
+    i = i * 2 + 1;
   }
 }
 
@@ -91,10 +91,10 @@ void postorder(int root) {
   int top1 = -1, top2 = -1;
   stack[++top1] = root;
   while (top1 != -1) {
-    int idx = stack[top1--];
-    stack2[++top2] = idx;
-    int left = idx * 2;
-    int right = idx * 2 + 1;
+    int i = stack[top1--];
+    stack2[++top2] = i;
+    int left = i * 2;
+    int right = i * 2 + 1;
     if (arr[left] != '\0') stack[++top1] = left;
     if (arr[right] != '\0') stack[++top1] = right;
   }

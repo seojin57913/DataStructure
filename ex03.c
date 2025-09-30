@@ -57,7 +57,8 @@ void staArray(int index) {
 void preorder(int root) {
   printf("pre-order: ");
   int top = -1;
-  if (arr[root] == '\0') return;
+  if (arr[root] == '\0') 
+    return;
   stack[++top] = root;
   while (top != -1) {
     int i = stack[top--];

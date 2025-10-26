@@ -1,343 +1,159 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <time.h>
-
-typedef struct {
-  int** matrix;
-  int num_vertices;
-  long long comparisons;
-} AdjacencyMatrix;
-
-AdjacencyMatrix* createAdjacencyMatrix(int num_vertices) {
-  AdjacencyMatrix* graph = (AdjacencyMatrix*)malloc(sizeof(AdjacencyMatrix));
-  graph->num_vertices = num_vertices;
-  graph->comparisons = 0;
-
-  graph->matrix = (int**)malloc(num_vertices * sizeof(int*));
-  for (int i = 0; i < num_vertices; i++) {
-      graph->matrix[i] = (int*)calloc(num_vertices, sizeof(int));
-  }
-  return graph;
-}
-
-void addEdgeMatrix(AdjacencyMatrix* graph, int u, int v) {
-  graph->comparisons = 0;
-  if (u >= 0 && u < graph->num_vertices && v >= 0 && v < graph->num_vertices) {
-    graph->comparisons += 2;
-    graph->matrix[u][v] = 1;
-    graph->matrix[v][u] = 1;
-    graph->comparisons += 2; 
-  }
-}
-
-void removeEdgeMatrix(AdjacencyMatrix* graph, int u, int v) {
-  graph->comparisons = 0;
-  if (u >= 0 && u < graph->num_vertices && v >= 0 && v < graph->num_vertices) {
-    graph->comparisons += 2;
-    graph->matrix[u][v] = 0;
-    graph->matrix[v][u] = 0;
-    graph->comparisons += 2;
-  }
-}
-
-int isConnectedMatrix(AdjacencyMatrix* graph, int u, int v) {
-  graph->comparisons = 0;
-  if (u >= 0 && u < graph->num_vertices && v >= 0 && v < graph->num_vertices) {
-    graph->comparisons += 2;  
-    graph->comparisons += 1;  
-    return graph->matrix[u][v] == 1;
-  }
-  return 0;
-}
-
-int* getAdjacentVerticesMatrix(AdjacencyMatrix* graph, int u, int* count) {
-  graph->comparisons = 0;
-  int* adjacent = (int*)malloc(graph->num_vertices * sizeof(int));
-  *count = 0;
-
-  if (u >= 0 && u < graph->num_vertices) {
-    graph->comparisons += 1;
-    for (int v = 0; v < graph->num_vertices; v++) {
-      graph->comparisons += 1; 
-      if (graph->matrix[u][v] == 1) {
-        graph->comparisons += 1;
-        adjacent[(*count)++] = v;
-      }
-    }
-  }
-  return adjacent;
-}
-
-long long getMemoryUsageMatrix(AdjacencyMatrix* graph) {
-  return (long long)graph->num_vertices * graph->num_vertices * sizeof(int);
-}
-
-void freeAdjacencyMatrix(AdjacencyMatrix* graph) {
-  for (int i = 0; i < graph->num_vertices; i++) {
-    free(graph->matrix[i]);
-  }
-  free(graph->matrix);
-  free(graph);
-}
+#define VERTICES 100
+#define SPARSE_EDGES 100
+#define DENSE_EDGES 4000
 
 typedef struct Node {
-  int vertex;
-  struct Node* next;
+    int dest;
+    struct Node* next;
 } Node;
 
-typedef struct {
-  Node** adjacency_list;
-  int num_vertices;
-  long long comparisons;
-} AdjacencyList;
+typedef struct GraphList {
+    Node* head[VERTICES];
+} GraphList;
 
-AdjacencyList* createAdjacencyList(int num_vertices) {
-  AdjacencyList* graph = (AdjacencyList*)malloc(sizeof(AdjacencyList));
-  graph->num_vertices = num_vertices;
-  graph->comparisons = 0;
-  graph->adjacency_list = (Node**)calloc(num_vertices, sizeof(Node*));
-  return graph;
-}
+void generate_random_edges(int edges[][2], int num_edges);
+void test_adj_matrix(int num_edges, int edges[][2], const char* graph_type);
+void test_adj_list(int num_edges, int edges[][2], const char* graph_type);
+Node* create_node(int dest);
+void add_edge_list(GraphList* graph, int src, int dest);
 
-int isVertexInList(Node* head, int v, long long* comparisons) {
-  while (head != NULL) {
-    (*comparisons)++;
-    if (head->vertex == v) {
-      return 1;
-    }
-    head = head->next;
-  }
-  return 0;
-}
-
-void addEdgeList(AdjacencyList* graph, int u, int v) {
-  graph->comparisons = 0;
-  if (u >= 0 && u < graph->num_vertices && v >= 0 && v < graph->num_vertices) {
-    graph->comparisons += 2;
-    if (!isVertexInList(graph->adjacency_list[u], v, &graph->comparisons)) {
-      graph->comparisons += 1;
-      Node* newNode = (Node*)malloc(sizeof(Node));
-      newNode->vertex = v;
-      newNode->next = graph->adjacency_list[u];
-      graph->adjacency_list[u] = newNode;
-      graph->comparisons += 2;
-    }
-    if (!isVertexInList(graph->adjacency_list[v], u, &graph->comparisons)) {
-      graph->comparisons += 1;
-      Node* newNode = (Node*)malloc(sizeof(Node));
-      newNode->vertex = u;
-      newNode->next = graph->adjacency_list[v];
-      graph->adjacency_list[v] = newNode;
-      graph->comparisons += 2;
-    }
-  }
-}
-
-int isConnectedList(AdjacencyList* graph, int u, int v) {
-  graph->comparisons = 0;
-  if (u >= 0 && u < graph->num_vertices && v >= 0 && v < graph->num_vertices) {
-    graph->comparisons += 2;
-    return isVertexInList(graph->adjacency_list[u], v, &graph->comparisons);
-  }
-  return 0;
-}
-
-int* getAdjacentVerticesList(AdjacencyList* graph, int u, int* count) {
-  graph->comparisons = 0;
-  *count = 0;
-  Node* current = graph->adjacency_list[u];
-  while (current != NULL) {
-    graph->comparisons += 1;
-    (*count)++;
-    current = current->next;
-  }
-  int* adjacent = (int*)malloc(*count * sizeof(int));
-  *count = 0;
-  current = graph->adjacency_list[u];
-  while (current != NULL) {
-    graph->comparisons += 1;
-    adjacent[(*count)++] = current->vertex;
-    current = current->next;
-  }
-  return adjacent;
-}
-
-long long getMemoryUsageList(AdjacencyList* graph) {
-  long long total_edges = 0;
-  for (int i = 0; i < graph->num_vertices; i++) {
-    Node* current = graph->adjacency_list[i];
-    while (current != NULL) {
-        total_edges++;
-        current = current->next;
-    }
-  }
-  return 8 * graph->num_vertices + total_edges * 16;
-}
-
-void freeAdjacencyList(AdjacencyList* graph) {
-  for (int i = 0; i < graph->num_vertices; i++) {
-    Node* current = graph->adjacency_list[i];
-    while (current != NULL) {
-      Node* temp = current;
-      current = current->next;
-      free(temp);
-    }
-  }
-  free(graph->adjacency_list);
-  free(graph);
-}
-
-typedef struct {
-  int u;
-  int v;
-} Edge;
-
-Edge* generateRandomGraph(int num_vertices, int num_edges, int* actual_edges) {
-  Edge* edges = (Edge*)malloc(num_edges * sizeof(Edge));
-  *actual_edges = 0;
-  int max_possible_edges = num_vertices * (num_vertices - 1) / 2;
-  int target_edges = (num_edges > max_possible_edges) ? max_possible_edges : num_edges;
-  while (*actual_edges < target_edges) {
-    int u = rand() % num_vertices;
-    int v = rand() % num_vertices;
-    if (u != v) {
-      int found = 0;
-      for (int i = 0; i < *actual_edges; i++) {
-        if ((edges[i].u == u && edges[i].v == v) || 
-          (edges[i].u == v && edges[i].v == u)) {
-          found = 1;
-          break;
-        }
-      }
-      if (!found) {
-        edges[*actual_edges].u = u;
-        edges[*actual_edges].v = v;
-        (*actual_edges)++;
-      }
-    }
-  }
-  return edges;
-}
-
-typedef struct {
-  long long memory;
-  long long insert_comparisons;
-  long long is_connected_comparisons;
-  long long adjacent_comparisons;
-} PerformanceResult;
-
-PerformanceResult measurePerformanceMatrix(AdjacencyMatrix* graph, Edge* edges, int num_edges) {
-  PerformanceResult result = {0, 0, 0, 0};
-  long long total_insert = 0;
-  for (int i = 0; i < num_edges; i++) {
-    addEdgeMatrix(graph, edges[i].u, edges[i].v);
-    total_insert += graph->comparisons;
-  }
-  result.memory = getMemoryUsageMatrix(graph);
-  result.insert_comparisons = total_insert;
-  long long total_connected = 0;
-  int num_tests = (graph->num_vertices < 10) ? graph->num_vertices : 10;
-  for (int i = 0; i < num_tests; i++) {
-    int u = rand() % graph->num_vertices;
-    int v = rand() % graph->num_vertices;
-    isConnectedMatrix(graph, u, v);
-    total_connected += graph->comparisons;
-  }
-  result.is_connected_comparisons = total_connected / num_tests;
-  long long total_adjacent = 0;
-  for (int i = 0; i < num_tests; i++) {
-    int u = rand() % graph->num_vertices;
-    int count;
-    int* adjacent = getAdjacentVerticesMatrix(graph, u, &count);
-    total_adjacent += graph->comparisons;
-    free(adjacent);
-  }
-  result.adjacent_comparisons = total_adjacent / num_tests;
-  return result;
-}
-
-PerformanceResult measurePerformanceList(AdjacencyList* graph, Edge* edges, int num_edges) {
-  PerformanceResult result = {0, 0, 0, 0};
-  long long total_insert = 0;
-  for (int i = 0; i < num_edges; i++) {
-        addEdgeList(graph, edges[i].u, edges[i].v);
-        total_insert += graph->comparisons;
-  }
-  result.memory = getMemoryUsageList(graph);
-  result.insert_comparisons = total_insert;
-  long long total_connected = 0;
-  int num_tests = (graph->num_vertices < 10) ? graph->num_vertices : 10;
-  for (int i = 0; i < num_tests; i++) {
-    int u = rand() % graph->num_vertices;
-    int v = rand() % graph->num_vertices;
-    isConnectedList(graph, u, v);
-    total_connected += graph->comparisons;
-  }
-  result.is_connected_comparisons = total_connected / num_tests;
-  long long total_adjacent = 0;
-  for (int i = 0; i < num_tests; i++) {
-    int u = rand() % graph->num_vertices;
-    int count;
-    int* adjacent = getAdjacentVerticesList(graph, u, &count);
-    total_adjacent += graph->comparisons;
-    free(adjacent);
-  }
-  result.adjacent_comparisons = total_adjacent / num_tests;
-  return result;
-}
 
 int main() {
-  srand((unsigned)time(NULL));
-  int num_vertices = 100;
-  int sparse_edges = 100;
-  int dense_edges = 4000;
+    srand((unsigned int)time(NULL));
+    int sparse_edges[SPARSE_EDGES][2];
+    generate_random_edges(sparse_edges, SPARSE_EDGES);
+    int dense_edges[DENSE_EDGES][2];
+    generate_random_edges(dense_edges, DENSE_EDGES);
+    test_adj_matrix(SPARSE_EDGES, sparse_edges, "희소 그래프");
+    test_adj_list(SPARSE_EDGES, sparse_edges, "희소 그래프");
+    test_adj_matrix(DENSE_EDGES, dense_edges, "밀집 그래프");
+    test_adj_list(DENSE_EDGES, dense_edges, "밀집 그래프");
+    return 0;
+}
 
-  int actual_sparse, actual_dense;
-  Edge* sparse_edges_list = generateRandomGraph(num_vertices, sparse_edges, &actual_sparse);
-  Edge* dense_edges_list = generateRandomGraph(num_vertices, dense_edges, &actual_dense);
+void generate_random_edges(int edges[][2], int num_edges) {
+    char is_connected[VERTICES][VERTICES] = {0};
+    int count = 0;
+    while (count < num_edges) {
+        int u = rand() % VERTICES;
+        int v = rand() % VERTICES;
+        if (u != v && !is_connected[u][v]) {
+            edges[count][0] = u;
+            edges[count][1] = v;
+            is_connected[u][v] = 1;
+            is_connected[v][u] = 1;
+            count++;
+        }
+    }
+}
 
-  AdjacencyMatrix* sparse_matrix = createAdjacencyMatrix(num_vertices);
-  PerformanceResult result1 = measurePerformanceMatrix(sparse_matrix, sparse_edges_list, actual_sparse);
+void test_adj_matrix(int num_edges, int edges[][2], const char* graph_type) {
+    int(*adj_matrix)[VERTICES] = calloc(VERTICES, sizeof(int[VERTICES]));
+    if (!adj_matrix) {
+        printf("메모리 할당 실패\n");
+        return;
+    }
+    for (int i = 0; i < num_edges; ++i) {
+        adj_matrix[edges[i][0]][edges[i][1]] = 1;
+        adj_matrix[edges[i][1]][edges[i][0]] = 1; 
+    }
+    long memory_usage = (long)VERTICES * VERTICES * sizeof(int);
+    int comparisons_insert_delete = 0;
+    int u_test = rand() % VERTICES;
+    int v_test = rand() % VERTICES;
+    if (adj_matrix[u_test][v_test] == 0)
+        comparisons_insert_delete++; 
+    else 
+        comparisons_insert_delete++;
+    comparisons_insert_delete++;
+    int comparisons_check_edge = 0;
+    u_test = edges[0][0];
+    v_test = edges[0][1];
+    if (adj_matrix[u_test][v_test] == 1) 
+        comparisons_check_edge++;
+    int comparisons_print_neighbors = 0;
+    int node_to_check = rand() % VERTICES;
+    for (int i = 0; i < VERTICES; ++i) {
+        comparisons_print_neighbors++; 
+    }
+    printf("케이스: %s - 인접 행렬 \n", graph_type);
+    printf("메모리: %ld Bytes\n", memory_usage);
+    printf("간선 삽입/삭제 비교: %d번\n", comparisons_insert_delete);
+    printf("두 정점의 연결 확인 비교: %d번\n", comparisons_check_edge);
+    printf("한 노드의 인접 노드 출력 비교: %d번\n\n", comparisons_print_neighbors);
+    free(adj_matrix);
+}
 
-  AdjacencyList* sparse_list = createAdjacencyList(num_vertices);
-  PerformanceResult result2 = measurePerformanceList(sparse_list, sparse_edges_list, actual_sparse);
+void test_adj_list(int num_edges, int edges[][2], const char* graph_type) {
+    GraphList* graph = (GraphList*)malloc(sizeof(GraphList));
+    for (int i = 0; i < VERTICES; i++) 
+        graph->head[i] = NULL;
+    for (int i = 0; i < num_edges; i++) {
+        add_edge_list(graph, edges[i][0], edges[i][1]);
+        add_edge_list(graph, edges[i][1], edges[i][0]);
+    }
+    long memory_usage = sizeof(Node*) * VERTICES; 
+    memory_usage += (long)num_edges * 2 * sizeof(Node); 
+    int comparisons_insert_delete = 0;
+    int u_test = edges[0][0]; 
+    int v_test = edges[0][1];
+    Node* current = graph->head[u_test];
+    while (current != NULL) {
+        comparisons_insert_delete++;
+        if (current->dest == v_test)
+            break;
+        current = current->next;
+    }
+    current = graph->head[v_test];
+    while (current != NULL) {
+        comparisons_insert_delete++;
+        if (current->dest == u_test) 
+            break;
+        current = current->next;
+    }
+    int comparisons_check_edge = 0;
+    current = graph->head[u_test];
+    while (current != NULL) {
+        comparisons_check_edge++;
+        if (current->dest == v_test) 
+            break;
+        current = current->next;
+    }
+    int comparisons_print_neighbors = 0;
+    int node_to_check = rand() % VERTICES;
+    current = graph->head[node_to_check];
+    while (current != NULL) {
+        comparisons_print_neighbors++; 
+        current = current->next;
+    }
+    printf("케이스: %s - 인접 리스트\n", graph_type);
+    printf("메모리: %ld Bytes\n", memory_usage);
+    printf("간선 삽입/삭제 비교: %d번\n", comparisons_insert_delete); 
+    printf("두 정점의 연결 확인 비교: %d번\n", comparisons_check_edge); 
+    printf("한 노드의 인접 노드 출력 비교: %d번\n\n", comparisons_print_neighbors); 
+    for (int i = 0; i < VERTICES; i++) {
+        Node* current = graph->head[i];
+        while (current != NULL) {
+            Node* temp = current;
+            current = current->next;
+            free(temp);
+        }
+    }
+    free(graph);
+}
 
-  AdjacencyMatrix* dense_matrix = createAdjacencyMatrix(num_vertices);
-  PerformanceResult result3 = measurePerformanceMatrix(dense_matrix, dense_edges_list, actual_dense);
+Node* create_node(int dest) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->dest = dest;
+    newNode->next = NULL;
+    return newNode;
+}
 
-  AdjacencyList* dense_list = createAdjacencyList(num_vertices);
-  PerformanceResult result4 = measurePerformanceList(dense_list, dense_edges_list, actual_dense);
-
-  printf("케이스 1: 희소그래프 - 인접행렬\n");
-  printf("메모리: %lld Bytes\n", result1.memory);
-  printf("간선 삽입/삭제 비교: %lld번\n", result1.insert_comparisons);
-  printf("두 정점의 연결 확인 비교: %lld번\n", result1.is_connected_comparisons);
-  printf("한 노드의 인접 노드 출력 비교: %lld번\n\n", result1.adjacent_comparisons);
-
-  printf("케이스 2: 희소그래프 - 인접리스트\n");
-  printf("메모리: %lld Bytes\n", result2.memory);
-  printf("간선 삽입/삭제 비교: %lld번\n", result2.insert_comparisons);
-  printf("두 정점의 연결 확인 비교: %lld번\n", result2.is_connected_comparisons);
-  printf("한 노드의 인접 노드 출력 비교: %lld번\n\n", result2.adjacent_comparisons);
-
-  printf("케이스 3: 밀집그래프 - 인접행렬\n");
-  printf("메모리: %lld Bytes\n", result3.memory);
-  printf("간선 삽입/삭제 비교: %lld번\n", result3.insert_comparisons);
-  printf("두 정점의 연결 확인 비교: %lld번\n", result3.is_connected_comparisons);
-  printf("한 노드의 인접 노드 출력 비교: %lld번\n\n", result3.adjacent_comparisons);
-
-  printf("케이스 4: 밀집그래프 - 인접리스트\n");
-  printf("메모리: %lld Bytes\n", result4.memory);
-  printf("간선 삽입/삭제 비교: %lld번\n", result4.insert_comparisons);
-  printf("두 정점의 연결 확인 비교: %lld번\n", result4.is_connected_comparisons);
-  printf("한 노드의 인접 노드 출력 비교: %lld번\n\n", result4.adjacent_comparisons);
-
-  freeAdjacencyMatrix(sparse_matrix);
-  freeAdjacencyList(sparse_list);
-  freeAdjacencyMatrix(dense_matrix);
-  freeAdjacencyList(dense_list);
-  free(sparse_edges_list);
-  free(dense_edges_list);
-  return 0;
+void add_edge_list(GraphList* graph, int src, int dest) {
+    Node* newNode = create_node(dest);
+    newNode->next = graph->head[src];
+    graph->head[src] = newNode;
 }

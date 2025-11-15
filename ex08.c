@@ -79,7 +79,6 @@ int main() {
     avg_insert /= RUNS;
     avg_shell_basic /= RUNS;
     avg_shell_opt /= RUNS;
-    printf("===== 평균 비교 횟수 (100회 평균) =====\n");
     printf("삽입 정렬 평균 비교 횟수     : %.0f\n", avg_insert);
     printf("쉘 정렬(기본 gap=n/2...) 평균 : %.0f\n", avg_shell_basic);
     printf("쉘 정렬(개선된 Knuth 수열) 평균 : %.0f\n", avg_shell_opt);
